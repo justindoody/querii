@@ -31,10 +31,14 @@ Accounts::FancySubset.call(hats: 4).where(typical: 'filtered')
 # ...Account::ActiveRecord_Relation < ActiveRecord::Relation
 ```
 
-Querii infers the base collection from the top level query object namespace of `Accounts` -> `Account.all`, you can override this by setting a `BASE_RELATION` constant within your module. Querii defines a default `Scopes` module that will just return all but to do anything useful by default you will need to define your own `Scopes` module. During a query this module is extended onto the base `ActiveRecord::Relation` and the `applied` method is executed returning an active record collection that can further be queried by both any additional methods defined within your Querii object `Scopes` and scopes or conditions on the standard AR class.
+Querii infers the base collection from the top level query object namespace of `Accounts` -> `Account.all`, you can override this by setting `self.default_relation = 'ClassName'` within your module. Querii defines a default `Scopes` module that will just return all but to do anything useful by default you will need to define your own `Scopes` module. During a query this module is extended onto the base `ActiveRecord::Relation` and the `applied` method is executed returning an active record collection that can further be queried by both any additional methods defined within your Querii object `Scopes` and scopes or conditions on the standard AR class.
 
 ## More
 
 ### Default scope
 
 The `applied` method is entirely optional and designed for query objects that only contain a single base scope always intended to be called so you can simply do `MyQueryObj.call` or equivalently `MyQueryObj.all`. Additionally the applied method can accept and use any number of args or keyword args.
+
+### Passing an already filtered relation
+
+`Account::FancySubset.call(relation: Account.joins(:whatever).such_scope)` will work out just fine.
