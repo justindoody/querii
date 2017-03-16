@@ -5,36 +5,52 @@ module Querii
 
       base.class_eval do
         # dynamically defines a base Scopes module
-        self.const_set(
-          :Scopes,
-          Module.new do
-            def applied(*args, **key_args)
-              all
-            end
-          end
-        )
+        self.const_set(:Scopes, Module.new)
+        default_scope { all }
       end
     end
 
     module ClassMethods
-      def call(*args, relation: default_relation_all, **key_args)
-        relation.extending(self::Scopes).applied(args, key_args)
-      end
+      # optionally override the default determined by top level namespace
+      attr_accessor :model_name
 
-      def default_relation_all
-        # .all returns current scope || all
-        relation_base.all
-      end
-
-      # queries are namespaced by plural model name
-      # from which we can infer query base model
-      def relation_base
-        default_relation.to_s.constantize || self.to_s.split('::').first.singularize.constantize
+      def call(*args, relation: base_class.all, **kargs)
+        relation.extending(self::Scopes).default(*args, **kargs)
       end
 
       alias_method :all, :call
 
-      attr_accessor :default_relation
+      def scope(name, body, &block)
+        unless body.respond_to?(:call)
+          raise ArgumentError, 'The scope body needs to be callable.'
+        end
+
+        self::Scopes.send(:define_method, name) do |*args, **kargs|
+          # unfortunately empty double splatted kargs still count as arguments
+          # for a lambda's argument arity checking
+          if kargs.empty?
+            scope = all.scoping { instance_exec(*args, &body) }
+          else
+            scope = all.scoping { instance_exec(*args, **kargs, &body) }
+          end
+
+          scope || all
+        end
+      end
+
+      def default_scope(scope = nil)
+        scope = Proc.new if block_given?
+        scope(:default, scope)
+      end
+
+      # queries are namespaced by plural model name
+      # from which we can infer query base model
+      def base_class
+        klass = model_name || self.to_s.split('::').first.singularize
+        klass.to_s.constantize
+      end
+      private :base_class
+
     end
   end
 end

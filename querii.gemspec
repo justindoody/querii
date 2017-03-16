@@ -2,7 +2,7 @@ $:.push File.expand_path('../lib', __FILE__)
 
 Gem::Specification.new do |s|
   s.name        = 'querii'
-  s.version     = '1.0.1'
+  s.version     = '1.1.0'
   s.authors     = %w[Justin Doody]
   s.email       = %w[justin@20dots.com]
   s.homepage    = 'https://github.com/justindoody/querii'
